@@ -9,6 +9,8 @@ import org.apache.maven.plugin.MojoFailureException;
  * http://maven.apache.org/guides/plugin/guide-java-plugin-development.html
  * 
  * @goal retest
+ * @phase test
+ * @requiresDependencyResolution test
  */
 public class ContinousTestPlugin extends AbstractMojo {
 

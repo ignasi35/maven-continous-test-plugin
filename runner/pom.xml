@@ -21,6 +21,14 @@
 				<groupId>com.marimon.maven</groupId>
 				<artifactId>continous-test-plugin</artifactId>
 				<version>${project.version}</version>
+					<executions>
+						<execution>
+							<phase>test</phase>
+							<goals>
+								<goal>retest</goal>
+							</goals>
+						</execution>
+					</executions>
 			</plugin>
 		</plugins>
 	</build>
