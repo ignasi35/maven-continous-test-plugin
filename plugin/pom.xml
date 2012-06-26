@@ -2,13 +2,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
+		<groupId>com.marimon.maven</groupId>
 		<artifactId>continous-test-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
-		<groupId>com.marimon.maven</groupId>
 	</parent>
 	
-	<artifactId>continous-test-plugin</artifactId>
-	<packaging>jar</packaging>
+	<!-- the artifact id uses the xxx-maven-plugin convention -->
+	<artifactId>continous-test-maven-plugin</artifactId>
+	<packaging>maven-plugin</packaging>
 
 	<name>continous-test plugin</name>
 

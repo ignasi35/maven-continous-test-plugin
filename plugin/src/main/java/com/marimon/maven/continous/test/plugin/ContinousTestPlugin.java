@@ -1,28 +1,23 @@
 package com.marimon.maven.continous.test.plugin;
 
-import org.apache.maven.plugin.Mojo;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
 
 /**
- * Maven plugin to continously run tests
+ * Maven plugin to continously run tests. Developed following the guide at:
+ * http://maven.apache.org/guides/plugin/guide-java-plugin-development.html
+ * 
+ * @goal retest
  */
-public class ContinousTestPlugin implements Mojo {
+public class ContinousTestPlugin extends AbstractMojo {
 
-    private Log _log;
-
-    public void execute()
-            throws MojoExecutionException, MojoFailureException {
-        _log.info("ContinousTestPlugin started.");
+    public void execute() throws
+    // Thrown to cause a BUILD ERROR
+            MojoExecutionException,
+            // Thrown to cause a BUILD FAILURE
+            MojoFailureException {
+        getLog().info("ContinousTestPlugin started.");
     }
 
-    public Log getLog() {
-        return _log;
-    }
-
-    public void setLog(final Log log) {
-        _log = log;
-
-    }
 }
