@@ -8,8 +8,6 @@ import org.apache.maven.plugin.MojoFailureException;
  * Maven plugin to continously run tests. Developed following the guide at:
  * http://maven.apache.org/guides/plugin/guide-java-plugin-development.html
  * 
- * @goal retest
- * @phase test
  * @requiresDependencyResolution test
  */
 public class ContinousTestPlugin extends AbstractMojo {
