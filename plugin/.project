@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>maven-continous-test-plugin</name>
+	<name>continous-test-maven-plugin</name>
 	<comment></comment>
 	<projects>
 	</projects>

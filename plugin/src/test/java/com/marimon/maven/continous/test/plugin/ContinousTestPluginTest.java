@@ -29,8 +29,8 @@ public class ContinousTestPluginTest {
         FakeLog log = new FakeLog();
         mojo.setLog(log);
         mojo.execute();
-        Assert.assertEquals("ContinousTestPlugin started.", log.getSb()
-            .toString());
+        Assert.assertEquals("Continous Test Plugin started...", log
+            .getSb().toString());
     }
 
     private class FakeLog extends DefaultLog {
