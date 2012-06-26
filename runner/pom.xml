@@ -1,0 +1,37 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.marimon.maven</groupId>
+		<artifactId>continous-test-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>continous-test-runner</artifactId>
+	<packaging>jar</packaging>
+
+	<name>continous-test runner</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.marimon.maven</groupId>
+				<artifactId>continous-test-maven-plugin</artifactId>
+				<version>${project.version}</version>
+					<executions>
+						<execution>
+							<phase>test</phase>
+							<goals>
+								<goal>retest</goal>
+							</goals>
+						</execution>
+					</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+
+</project>
