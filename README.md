@@ -23,6 +23,10 @@ Todo list
 
 The fllowing is incomplete but is more or less prioritized from higher to lower priority.
 
+*TODO*: move this *TODO*s into GitHub Issues.
+
 *TODO*: detect file change (use sbt's approach of scanning folder every 200ms)
+
 *TODO*: launch recompilation of the parts that changed
+
 *TODO*: use Java7 (if available to detect file change)
