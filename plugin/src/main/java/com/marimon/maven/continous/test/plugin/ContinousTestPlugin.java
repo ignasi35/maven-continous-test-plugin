@@ -1,10 +1,15 @@
 package com.marimon.maven.continous.test.plugin;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -47,33 +52,67 @@ public class ContinousTestPlugin extends AbstractMojo implements
         int runs = 0;
         while (runs < 10) {
             getLog().info("Checking files...");
+            ConcurrentHashMap ctx = new ConcurrentHashMap();
+            ctx.putAll(getPluginContext());
+            surefirePlugin.setPluginContext(ctx);
+
             surefirePlugin.execute();
-            getLog().info("Files checked.");
+            // updateTarget();
+            getLog().info("Files checked. " + runs);
             runs++;
         }
         getLog().info("Continous Test Plugin completed.");
     }
 
-    /**
-     * @see org.apache.maven.plugin.ContextEnabled#getPluginContext()
-     */
+    private void updateTarget() {
+        SurefirePlugin result = new SurefirePlugin();
+        Method[] source = surefirePlugin.getClass().getMethods();
+        Method[] target = result.getClass().getMethods();
+        Map<String, Method> getters = filter(source, "get");
+        Set<Entry<String, Method>> entrySet = getters.entrySet();
+        Map<String, Method> setters = filter(target, "set");
+        for (Entry<String, Method> entry : entrySet) {
+            if (setters.containsKey(entry.getKey())) {
+                try {
+                    setters.get(entry.getKey()).invoke(result,
+                        entry.getValue().invoke(surefirePlugin));
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+    private Map<String, Method> filter(final Method[] source,
+            final String prefix) {
+        Map<String, Method> result =
+            new ConcurrentHashMap<String, Method>();
+        for (Method method : source) {
+            if (method.getName().startsWith(prefix)) {
+                result.put(method.getName().substring(prefix.length()),
+                    method);
+            }
+        }
+        return result;
+    }
+
     @Override
     public Map getPluginContext() {
-        return surefirePlugin.getPluginContext();
+        return super.getPluginContext();
     }
 
-    /**
-     * @see org.apache.maven.plugin.ContextEnabled#setPluginContext(java.util.Map)
-     */
     @Override
     public void setPluginContext(final Map pluginContext) {
-        surefirePlugin.setPluginContext(pluginContext);
+        super.setPluginContext(pluginContext);
+
     }
 
     /**
-     * Information about this plugin, mainly used to lookup this plugin's
-     * configuration from the currently executing project.
-     * 
      * @parameter default-value="${plugin}"
      * @readonly
      * @since 2.12
@@ -81,18 +120,12 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private PluginDescriptor pluginDescriptor;
 
     /**
-     * Set this to "true" to skip running tests, but still compile them. Its use
-     * is NOT RECOMMENDED, but quite convenient on occasion.
-     * 
      * @parameter default-value="false" expression="${skipTests}"
      * @since 2.4
      */
     private boolean skipTests;
 
     /**
-     * This old parameter is just like <code>skipTests</code>, but bound to the
-     * old property "maven.test.skip.exec".
-     * 
      * @parameter expression="${maven.test.skip.exec}"
      * @since 2.3
      * @deprecated Use skipTests instead.
@@ -101,100 +134,61 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private boolean skipExec;
 
     /**
-     * Set this to "true" to bypass unit tests entirely. Its use is NOT
-     * RECOMMENDED, especially if you enable it using the "maven.test.skip"
-     * property, because maven.test.skip disables both running the tests and
-     * compiling the tests. Consider using the <code>skipTests</code> parameter
-     * instead.
-     * 
      * @parameter default-value="false" expression="${maven.test.skip}"
      */
     private boolean skip;
 
     /**
-     * Set this to "true" to ignore a failure during testing. Its use is NOT
-     * RECOMMENDED, but quite convenient on occasion.
-     * 
      * @parameter default-value="false"
      *            expression="${maven.test.failure.ignore}"
      */
     private boolean testFailureIgnore;
 
     /**
-     * The base directory of the project being tested. This can be obtained in
-     * your unit test via System.getProperty("basedir").
-     * 
      * @parameter default-value="${basedir}"
      */
     private File basedir;
 
     /**
-     * The directory containing generated test classes of the project being
-     * tested. This will be included at the beginning of the test classpath. *
-     * 
      * @parameter default-value="${project.build.testOutputDirectory}"
      */
     private File testClassesDirectory;
 
     /**
-     * The directory containing generated classes of the project being tested.
-     * This will be included after the test classes in the test classpath.
-     * 
      * @parameter default-value="${project.build.outputDirectory}"
      */
     private File classesDirectory;
 
     /**
-     * The Maven Project Object.
-     * 
      * @parameter default-value="${project}"
      * @readonly
      */
     private MavenProject project;
 
     /**
-     * List of dependencies to exclude from the test classpath. Each dependency
-     * string must follow the format <i>groupId:artifactId</i>. For example:
-     * <i>org.acme:project-a</i>
-     * 
      * @parameter
      * @since 2.6
      */
     private List<String> classpathDependencyExcludes;
 
     /**
-     * A dependency scope to exclude from the test classpath. The scope can be
-     * one of the following scopes:
-     * <p/>
-     * <ul>
-     * <li><i>compile</i> - system, provided, compile
-     * <li><i>runtime</i> - compile, runtime
-     * <li><i>test</i> - system, provided, compile, runtime, test
-     * </ul>
-     * 
      * @parameter default-value=""
      * @since 2.6
      */
     private String classpathDependencyScopeExclude;
 
     /**
-     * Additional elements to be appended to the classpath.
-     * 
      * @parameter
      * @since 2.4
      */
     private List<String> additionalClasspathElements;
 
     /**
-     * Base directory where all reports are written to.
-     * 
      * @parameter default-value="${project.build.directory}/surefire-reports"
      */
     private File reportsDirectory;
 
     /**
-     * The test source directory containing test class sources.
-     * 
      * @parameter default-value="${project.build.testSourceDirectory}"
      * @required
      * @since 2.2
@@ -202,59 +196,21 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private File testSourceDirectory;
 
     /**
-     * Specify this parameter to run individual tests by file name, overriding
-     * the <code>includes/excludes</code> parameters. Each pattern you specify
-     * here will be used to create an include pattern formatted like
-     * <code>**&#47;${test}.java</code>, so you can just type "-Dtest=MyTest" to
-     * run a single test called "foo/MyTest.java".<br/>
-     * This parameter overrides the <code>includes/excludes</code> parameters,
-     * and the TestNG <code>suiteXmlFiles</code> parameter.
-     * <p/>
-     * Since 2.7.3, you can execute a limited number of methods in the test by
-     * adding #myMethod or #my*ethod. For example, "-Dtest=MyTest#myMethod".
-     * This is supported for junit 4.x and testNg.
-     * 
      * @parameter expression="${test}"
      */
     private String test;
 
     /**
-     * A list of &lt;include> elements specifying the tests (by pattern) that
-     * should be included in testing. When not specified and when the
-     * <code>test</code> parameter is not specified, the default includes will
-     * be <code><br/>
-     * &lt;includes><br/>
-     * &nbsp;&lt;include>**&#47;Test*.java&lt;/include><br/>
-     * &nbsp;&lt;include>**&#47;*Test.java&lt;/include><br/>
-     * &nbsp;&lt;include>**&#47;*TestCase.java&lt;/include><br/>
-     * &lt;/includes><br/>
-     * </code> This parameter is ignored if the TestNG
-     * <code>suiteXmlFiles</code> parameter is specified.
-     * 
      * @parameter
      */
     private List<String> includes;
 
     /**
-     * A list of &lt;exclude> elements specifying the tests (by pattern) that
-     * should be excluded in testing. When not specified and when the
-     * <code>test</code> parameter is not specified, the default excludes will
-     * be <code><br/>
-     * &lt;excludes><br/>
-     * &nbsp;&lt;exclude>**&#47;*$*&lt;/exclude><br/>
-     * &lt;/excludes><br/>
-     * </code> (which excludes all inner classes).<br>
-     * This parameter is ignored if the TestNG <code>suiteXmlFiles</code>
-     * parameter is specified.
-     * 
      * @parameter
      */
     private List<String> excludes;
 
     /**
-     * ArtifactRepository of the localRepository. To obtain the directory of
-     * localRepository in unit tests use System.getProperty("localRepository").
-     * 
      * @parameter expression="${localRepository}"
      * @required
      * @readonly
@@ -262,8 +218,6 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private ArtifactRepository localRepository;
 
     /**
-     * List of System properties to pass to the JUnit tests.
-     * 
      * @parameter
      * @deprecated Use systemPropertyVariables instead.
      */
@@ -271,34 +225,24 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private Properties systemProperties;
 
     /**
-     * List of System properties to pass to the JUnit tests.
-     * 
      * @parameter
      * @since 2.5
      */
     private Map<String, String> systemPropertyVariables;
 
     /**
-     * List of System properties, loaded from a file, to pass to the JUnit
-     * tests.
-     * 
      * @parameter
      * @since 2.8.2
      */
     private File systemPropertiesFile;
 
     /**
-     * List of properties for configuring all TestNG related configurations.
-     * This is the new preferred method of configuring TestNG.
-     * 
      * @parameter
      * @since 2.4
      */
     private Properties properties;
 
     /**
-     * Map of plugin artifacts.
-     * 
      * @parameter expression="${plugin.artifactMap}"
      * @required
      * @readonly
@@ -306,8 +250,6 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private Map<String, Artifact> pluginArtifactMap;
 
     /**
-     * Map of project artifacts.
-     * 
      * @parameter expression="${project.artifactMap}"
      * @required
      * @readonly
@@ -315,46 +257,26 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private Map<String, Artifact> projectArtifactMap;
 
     /**
-     * Option to print summary of test suites or just print the test cases that
-     * have errors.
-     * 
      * @parameter expression="${surefire.printSummary}" default-value="true"
      */
     private boolean printSummary;
 
     /**
-     * Selects the formatting for the test report to be generated. Can be set as
-     * "brief" or "plain".
-     * 
      * @parameter expression="${surefire.reportFormat}" default-value="brief"
      */
     private String reportFormat;
 
     /**
-     * Add custom text into report filename:
-     * TEST-testClassName-reportNameSuffix.xml,
-     * testClassName-reportNameSuffix.txt and
-     * testClassName-reportNameSuffix-output.txt. File
-     * TEST-testClassName-reportNameSuffix.xml has changed attributes
-     * 'testsuite'--'name' and 'testcase'--'classname' - reportNameSuffix is
-     * added to the attribute value.
-     * 
      * @parameter expression="${surefire.reportNameSuffix}" default-value=""
      */
     private String reportNameSuffix;
 
     /**
-     * Option to generate a file test report or just output the test report to
-     * the console.
-     * 
      * @parameter expression="${surefire.useFile}" default-value="true"
      */
     private boolean useFile;
 
     /**
-     * Set this to "true" to redirect the unit test standard output to a file
-     * (found in reportsDirectory/testName-output.txt).
-     * 
      * @parameter expression="${maven.test.redirectTestOutputToFile}"
      *            default-value="false"
      * @since 2.3
@@ -362,77 +284,48 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private boolean redirectTestOutputToFile;
 
     /**
-     * Set this to "true" to cause a failure if there are no tests to run.
-     * Defaults to "false".
-     * 
      * @parameter expression="${failIfNoTests}"
      * @since 2.4
      */
     private Boolean failIfNoTests;
 
     /**
-     * Set this to "true" to cause a failure if the none of the tests specified
-     * in -Dtest=... are run. Defaults to "true".
-     * 
      * @parameter expression="${surefire.failIfNoSpecifiedTests}"
      * @since 2.12
      */
     private Boolean failIfNoSpecifiedTests;
 
     /**
-     * Option to specify the forking mode. Can be "never", "once", "always" or
-     * "perthread". "none" and "pertest" are also accepted for backwards
-     * compatibility. "always" forks for each test-class. "perthread" will
-     * create "threadCount" parallel forks.
-     * 
      * @parameter expression="${forkMode}" default-value="once"
      * @since 2.1
      */
     private String forkMode;
 
     /**
-     * Option to specify the jvm (or path to the java executable) to use with
-     * the forking options. For the default, the jvm will be a new instance of
-     * the same VM as the one used to run Maven. JVM settings are not inherited
-     * from MAVEN_OPTS.
-     * 
      * @parameter expression="${jvm}"
      * @since 2.1
      */
     private String jvm;
 
     /**
-     * Arbitrary JVM options to set on the command line.
-     * 
      * @parameter expression="${argLine}"
      * @since 2.1
      */
     private String argLine;
 
     /**
-     * Attach a debugger to the forked JVM. If set to "true", the process will
-     * suspend and wait for a debugger to attach on port 5005. If set to some
-     * other string, that string will be appended to the argLine, allowing you
-     * to configure arbitrary debuggability options (without overwriting the
-     * other options specified through the <code>argLine</code> parameter).
-     * 
      * @parameter expression="${maven.surefire.debug}"
      * @since 2.4
      */
     private String debugForkedProcess;
 
     /**
-     * Kill the forked test process after a certain number of seconds. If set to
-     * 0, wait forever for the process, never timing out.
-     * 
      * @parameter expression="${surefire.timeout}"
      * @since 2.4
      */
     private int forkedProcessTimeoutInSeconds;
 
     /**
-     * Additional environment variables to set on the command line.
-     * 
      * @parameter
      * @since 2.1.3
      */
@@ -440,77 +333,42 @@ public class ContinousTestPlugin extends AbstractMojo implements
         new HashMap<String, String>();
 
     /**
-     * Command line working directory.
-     * 
      * @parameter expression="${basedir}"
      * @since 2.1.3
      */
     private File workingDirectory;
 
     /**
-     * When false it makes tests run using the standard classloader delegation
-     * instead of the default Maven isolated classloader. Only used when forking
-     * (forkMode is not "none").<br/>
-     * Setting it to false helps with some problems caused by conflicts between
-     * xml parsers in the classpath and the Java 5 provider parser.
-     * 
      * @parameter expression="${childDelegation}" default-value="false"
      * @since 2.1
      */
     private boolean childDelegation;
 
     /**
-     * (TestNG/JUnit47 provider with JUnit4.8+ only) Groups for this test. Only
-     * classes/methods/etc decorated with one of the groups specified here will
-     * be included in test run, if specified. <br/>
-     * For JUnit, this parameter forces the use of the 4.7 provider<br/>
-     * This parameter is ignored if the <code>suiteXmlFiles</code> parameter is
-     * specified. .
-     * 
      * @parameter expression="${groups}"
      * @since 2.2
      */
     private String groups;
 
     /**
-     * (TestNG/JUnit47 provider with JUnit4.8+ only) Excluded groups. Any
-     * methods/classes/etc with one of the groups specified in this list will
-     * specifically not be run.<br/>
-     * For JUnit, this parameter forces the use of the 4.7 provider<br/>
-     * This parameter is ignored if the <code>suiteXmlFiles</code> parameter is
-     * specified.
-     * 
      * @parameter expression="${excludedGroups}"
      * @since 2.2
      */
     private String excludedGroups;
 
     /**
-     * (TestNG) List of &lt;suiteXmlFile> elements specifying TestNG suite xml
-     * file locations. Note that <code>suiteXmlFiles</code> is incompatible with
-     * several other parameters of this plugin, like
-     * <code>includes/excludes</code>.<br/>
-     * This parameter is ignored if the <code>test</code> parameter is specified
-     * (allowing you to run a single test instead of an entire suite).
-     * 
      * @parameter
      * @since 2.2
      */
     private File[] suiteXmlFiles;
 
     /**
-     * Allows you to specify the name of the JUnit artifact. If not set,
-     * <code>junit:junit</code> will be used.
-     * 
      * @parameter expression="${junitArtifactName}" default-value="junit:junit"
      * @since 2.3.1
      */
     private String junitArtifactName;
 
     /**
-     * Allows you to specify the name of the TestNG artifact. If not set,
-     * <code>org.testng:testng</code> will be used.
-     * 
      * @parameter expression="${testNGArtifactName}"
      *            default-value="org.testng:testng"
      * @since 2.3.1
@@ -518,85 +376,52 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private String testNGArtifactName;
 
     /**
-     * (forkMode=perthread or TestNG/JUnit 4.7 provider) The attribute
-     * thread-count allows you to specify how many threads should be allocated
-     * for this execution. Only makes sense to use in conjunction with the
-     * <code>parallel</code> parameter. (forkMode=perthread does not
-     * support/require the <code>parallel</code> parameter)
-     * 
      * @parameter expression="${threadCount}"
      * @since 2.2
      */
     private int threadCount;
 
     /**
-     * (JUnit 4.7 provider) Indicates that threadCount is per cpu core.
-     * 
      * @parameter expression="${perCoreThreadCount}" default-value="true"
      * @since 2.5
      */
     private boolean perCoreThreadCount;
 
     /**
-     * (JUnit 4.7 provider) Indicates that the thread pool will be unlimited.
-     * The <code>parallel</code> parameter and the actual number of
-     * classes/methods will decide. Setting this to "true" effectively disables
-     * <code>perCoreThreadCount</code> and <code>threadCount</code>. Defaults to
-     * "false".
-     * 
      * @parameter expression="${useUnlimitedThreads}" default-value="false"
      * @since 2.5
      */
     private boolean useUnlimitedThreads;
 
     /**
-     * (TestNG only) When you use the <code>parallel</code> attribute, TestNG
-     * will try to run all your test methods in separate threads, except for
-     * methods that depend on each other, which will be run in the same thread
-     * in order to respect their order of execution.
-     * <p/>
-     * (JUnit 4.7 provider) Supports values "classes"/"methods"/"both" to run in
-     * separate threads, as controlled by <code>threadCount</code>.
-     * 
      * @parameter expression="${parallel}"
      * @since 2.2
      */
     private String parallel;
 
     /**
-     * Whether to trim the stack trace in the reports to just the lines within
-     * the test, or show the full trace.
-     * 
      * @parameter expression="${trimStackTrace}" default-value="true"
      * @since 2.2
      */
     private boolean trimStackTrace;
 
     /**
-     * Resolves the artifacts needed.
-     * 
      * @component
      */
     private ArtifactResolver artifactResolver;
 
     /**
-     * Creates the artifact.
-     * 
      * @component
      */
     private ArtifactFactory artifactFactory;
 
     /**
-     * The remote plugin repositories declared in the POM.
-     * 
      * @parameter expression="${project.pluginArtifactRepositories}"
      * @since 2.2
      */
     private List<ArtifactRepository> remoteRepositories;
 
     /**
-     * For retrieval of artifact's metadata.
-     * 
      * @component
      */
     private ArtifactMetadataSource metadataSource;
@@ -609,19 +434,12 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private final Properties internalSystemProperties = new Properties();
 
     /**
-     * Flag to disable the generation of report files in xml format.
-     * 
      * @parameter expression="${disableXmlReport}" default-value="false"
      * @since 2.2
      */
     private boolean disableXmlReport;
 
     /**
-     * Option to pass dependencies to the system's classloader instead of using
-     * an isolated class loader when forking. Prevents problems with JDKs which
-     * implement the service provider lookup mechanism by using the system's
-     * classloader.
-     * 
      * @parameter expression="${surefire.useSystemClassLoader}"
      *            default-value="true"
      * @since 2.3
@@ -629,16 +447,6 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private boolean useSystemClassLoader;
 
     /**
-     * By default, Surefire forks your tests using a manifest-only JAR; set this
-     * parameter to "false" to force it to launch your tests with a plain old
-     * Java classpath. (See
-     * http://maven.apache.org/plugins/maven-surefire-plugin
-     * /examples/class-loading.html for a more detailed explanation of
-     * manifest-only JARs and their benefits.)
-     * <p/>
-     * Beware, setting this to "false" may cause your tests to fail on Windows
-     * if your classpath is too long.
-     * 
      * @parameter expression="${surefire.useManifestOnlyJar}"
      *            default-value="true"
      * @since 2.4.3
@@ -646,17 +454,12 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private boolean useManifestOnlyJar;
 
     /**
-     * By default, Surefire enables JVM assertions for the execution of your
-     * test cases. To disable the assertions, set this flag to "false".
-     * 
      * @parameter expression="${enableAssertions}" default-value="true"
      * @since 2.3.1
      */
     private boolean enableAssertions;
 
     /**
-     * The current build session instance.
-     * 
      * @parameter expression="${session}"
      * @required
      * @readonly
@@ -664,8 +467,6 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private MavenSession session;
 
     /**
-     * (TestNG only) Define the factory class used to create all test instances.
-     * 
      * @parameter expression="${objectFactory}"
      * @since 2.5
      */
@@ -679,29 +480,6 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private Boolean parallelMavenExecution;
 
     /**
-     * Defines the order the tests will be run in. Supported values are
-     * "alphabetical", "reversealphabetical", "random", "hourly" (alphabetical
-     * on even hours, reverse alphabetical on odd hours), "failedfirst",
-     * "balanced" and "filesystem".
-     * <p/>
-     * <p/>
-     * Odd/Even for hourly is determined at the time the of scanning the
-     * classpath, meaning it could change during a multi-module build.
-     * <p/>
-     * Failed first will run tests that failed on previous run first, as well as
-     * new tests for this run.
-     * <p/>
-     * Balanced is only relevant with parallel=classes, and will try to optimize
-     * the run-order of the tests to make all tests complete at the same time,
-     * reducing the overall execution time.
-     * <p/>
-     * Note that the statistics are stored in a file named .surefire-XXXXXXXXX
-     * beside pom.xml, and should not be checked into version control. The
-     * "XXXXX" is the SHA1 checksum of the entire surefire configuration, so
-     * different configurations will have different statistics files, meaning if
-     * you change any config settings you will re-run once before new statistics
-     * data can be established.
-     * 
      * @parameter default-value="filesystem"
      * @since 2.7
      */

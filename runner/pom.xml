@@ -21,17 +21,24 @@
 				<groupId>com.marimon.maven</groupId>
 				<artifactId>continous-test-maven-plugin</artifactId>
 				<version>${project.version}</version>
-					<executions>
-						<execution>
-							<phase>test</phase>
-							<goals>
-								<goal>retest</goal>
-							</goals>
-						</execution>
-					</executions>
+				<executions>
+					<execution>
+						<phase>test</phase>
+						<goals>
+							<goal>retest</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
 
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 </project>
