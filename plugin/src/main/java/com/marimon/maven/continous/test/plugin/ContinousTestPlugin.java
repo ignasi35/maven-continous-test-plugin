@@ -1,13 +1,13 @@
 package com.marimon.maven.continous.test.plugin;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.surefire.SurefireExecutionParameters;
 import org.apache.maven.plugin.surefire.SurefirePlugin;
 
 /**
@@ -18,7 +18,8 @@ import org.apache.maven.plugin.surefire.SurefirePlugin;
  * @phase test
  * @requiresDependencyResolution test
  */
-public class ContinousTestPlugin extends AbstractMojo {
+public class ContinousTestPlugin extends AbstractMojo implements
+        SurefireExecutionParameters {
 
     /**
      * target/ folder were data will be read/written.
@@ -54,8 +55,25 @@ public class ContinousTestPlugin extends AbstractMojo {
      * @required
      * @readonly
      */
-    private final Map<String, Artifact> pluginArtifactMap =
-        new HashMap<String, Artifact>();
+    private Map<String, Artifact> pluginArtifactMap;
+
+    /**
+     * Map of project artifacts.
+     * 
+     * @parameter expression="${project.artifactMap}"
+     * @required
+     * @readonly
+     */
+    private Map<String, Artifact> projectArtifactMap;
+
+    /**
+     * Base directory where all reports are written to.
+     * 
+     * @parameter default-value="${project.build.directory}/surefire-reports"
+     */
+    private File reportsDirectory;
+
+    private Map pluginContext;
 
     public void execute() throws
     // Thrown to cause a BUILD ERROR
@@ -67,9 +85,68 @@ public class ContinousTestPlugin extends AbstractMojo {
         surefirePlugin.setWorkingDirectory(new File(targetFolder));
         surefirePlugin.setTestClassesDirectory(new File(
             targetTestClassesFolder));
+        surefirePlugin.setProjectArtifactMap(projectArtifactMap);
         surefirePlugin.setJunitArtifactName(junitArtifactName);
+        surefirePlugin.setPluginContext(pluginContext);
+        surefirePlugin.setReportsDirectory(reportsDirectory);
+        surefirePlugin.setPluginArtifactMap(pluginArtifactMap);
 
         surefirePlugin.execute();
         getLog().info("Continous Test Plugin completed.");
     }
+
+    public Map<String, Artifact> getProjectArtifactMap() {
+        return projectArtifactMap;
+    }
+
+    public void setProjectArtifactMap(
+            final Map<String, Artifact> projectArtifactMap) {
+        this.projectArtifactMap = projectArtifactMap;
+    }
+
+    public String getTargetFolder() {
+        return targetFolder;
+    }
+
+    public String getTargetTestClassesFolder() {
+        return targetTestClassesFolder;
+    }
+
+    public String getJunitArtifactName() {
+        return junitArtifactName;
+    }
+
+    /**
+     * @see org.apache.maven.plugin.ContextEnabled#getPluginContext()
+     */
+    @Override
+    public Map getPluginContext() {
+        return pluginContext;
+    }
+
+    /**
+     * @see org.apache.maven.plugin.ContextEnabled#setPluginContext(java.util.Map)
+     */
+    @Override
+    public void setPluginContext(final Map pluginContext) {
+        this.pluginContext = pluginContext;
+    }
+
+    public File getReportsDirectory() {
+        return reportsDirectory;
+    }
+
+    public void setReportsDirectory(final File reportsDirectory) {
+        this.reportsDirectory = reportsDirectory;
+    }
+
+    public Map<String, Artifact> getPluginArtifactMap() {
+        return pluginArtifactMap;
+    }
+
+    public void setPluginArtifactMap(
+            final Map<String, Artifact> pluginArtifactMap) {
+        this.pluginArtifactMap = pluginArtifactMap;
+    }
+
 }

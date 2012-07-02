@@ -4,6 +4,7 @@ import junit.framework.Assert;
 
 import org.apache.maven.monitor.logging.DefaultLog;
 import org.apache.maven.plugin.Mojo;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -23,6 +24,7 @@ public class ContinousTestPluginTest {
     }
 
     @Test
+    @Ignore
     public void testLoggerOutputsDataRegardingThePluginWhenExecuted()
             throws Exception {
         Mojo mojo = new ContinousTestPlugin();
