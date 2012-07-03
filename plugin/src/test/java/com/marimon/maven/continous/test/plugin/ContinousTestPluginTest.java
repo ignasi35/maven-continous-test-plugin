@@ -29,7 +29,8 @@ public class ContinousTestPluginTest {
     @SuppressWarnings("rawtypes")
     @Before
     public void before() {
-        _mojo = new ContinousTestPlugin(new FakeSurefirePlugin());
+        _mojo = new ContinousTestPlugin();
+        _mojo.setPlugin(new FakeSurefirePlugin());
         _mojo.setPluginContext(new ConcurrentHashMap());
 
         _tmpFolder =

@@ -43,15 +43,15 @@ public class ContinousTestPlugin extends AbstractMojo implements
 
     public static final long DELAY = 200;
 
-    private final SurefirePlugin surefirePlugin;
+    private SurefirePlugin surefirePlugin;
 
     private String _previousHash = "";
 
     public ContinousTestPlugin() {
-        this(new SurefirePlugin());
+        surefirePlugin = new SurefirePlugin();
     }
 
-    public ContinousTestPlugin(final SurefirePlugin surefirePlugin) {
+    protected void setPlugin(final SurefirePlugin surefirePlugin) {
         this.surefirePlugin = surefirePlugin;
     }
 
@@ -71,7 +71,11 @@ public class ContinousTestPlugin extends AbstractMojo implements
                 } catch (InterruptedException e) {
                 }
             }
-            launch();
+            @SuppressWarnings("rawtypes")
+            ConcurrentHashMap ctx = new ConcurrentHashMap();
+            ctx.putAll(getPluginContext());
+            surefirePlugin.setPluginContext(ctx);
+            surefirePlugin.execute();
 
             getLog().info("Files checked. " + runs);
             runs++;
@@ -139,26 +143,14 @@ public class ContinousTestPlugin extends AbstractMojo implements
 
     }
 
-    private void launch()
-            throws MojoExecutionException, MojoFailureException {
-        @SuppressWarnings("rawtypes")
-        ConcurrentHashMap ctx = new ConcurrentHashMap();
-        ctx.putAll(getPluginContext());
-        surefirePlugin.setPluginContext(ctx);
-        surefirePlugin.execute();
-    }
-
-    @SuppressWarnings("rawtypes")
     @Override
     public Map getPluginContext() {
         return super.getPluginContext();
     }
 
     @Override
-    public void setPluginContext(
-            @SuppressWarnings("rawtypes") final Map pluginContext) {
+    public void setPluginContext(final Map pluginContext) {
         super.setPluginContext(pluginContext);
-
     }
 
     /**

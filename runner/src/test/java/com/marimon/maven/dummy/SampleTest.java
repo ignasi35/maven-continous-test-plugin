@@ -1,7 +1,6 @@
 package com.marimon.maven.dummy;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 public class SampleTest {
