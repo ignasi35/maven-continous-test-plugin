@@ -30,3 +30,7 @@ The fllowing is incomplete but is more or less prioritized from higher to lower 
 *TODO*: launch recompilation of the parts that changed
 
 *TODO*: use Java7 (if available to detect file change)
+
+*TODO*: make the plugin be declared in a parent pom so it's usable in all modules
+
+*TODO*: detect changes in dependency modules soanged module is recompiled (and current module is relaunched? and both are relaunched? and all dependency chain is relaunched?).
