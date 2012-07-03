@@ -1,14 +1,10 @@
 package com.marimon.maven.continous.test.plugin;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.maven.artifact.Artifact;
@@ -52,6 +48,8 @@ public class ContinousTestPlugin extends AbstractMojo implements
         int runs = 0;
         while (runs < 10) {
             getLog().info("Checking files...");
+
+            @SuppressWarnings("rawtypes")
             ConcurrentHashMap ctx = new ConcurrentHashMap();
             ctx.putAll(getPluginContext());
             surefirePlugin.setPluginContext(ctx);
@@ -64,50 +62,15 @@ public class ContinousTestPlugin extends AbstractMojo implements
         getLog().info("Continous Test Plugin completed.");
     }
 
-    private void updateTarget() {
-        SurefirePlugin result = new SurefirePlugin();
-        Method[] source = surefirePlugin.getClass().getMethods();
-        Method[] target = result.getClass().getMethods();
-        Map<String, Method> getters = filter(source, "get");
-        Set<Entry<String, Method>> entrySet = getters.entrySet();
-        Map<String, Method> setters = filter(target, "set");
-        for (Entry<String, Method> entry : entrySet) {
-            if (setters.containsKey(entry.getKey())) {
-                try {
-                    setters.get(entry.getKey()).invoke(result,
-                        entry.getValue().invoke(surefirePlugin));
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
-
-    private Map<String, Method> filter(final Method[] source,
-            final String prefix) {
-        Map<String, Method> result =
-            new ConcurrentHashMap<String, Method>();
-        for (Method method : source) {
-            if (method.getName().startsWith(prefix)) {
-                result.put(method.getName().substring(prefix.length()),
-                    method);
-            }
-        }
-        return result;
-    }
-
+    @SuppressWarnings("rawtypes")
     @Override
     public Map getPluginContext() {
         return super.getPluginContext();
     }
 
     @Override
-    public void setPluginContext(final Map pluginContext) {
+    public void setPluginContext(
+            @SuppressWarnings("rawtypes") final Map pluginContext) {
         super.setPluginContext(pluginContext);
 
     }
