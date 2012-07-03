@@ -23,6 +23,10 @@ Todo list
 
 The fllowing is incomplete but is more or less prioritized from higher to lower priority.
 
+*TODO*: enter an infinite loop until a certain key is pressed.
+
+*TODO*: provide colored feedback so it's easie to see if tests passed or failed.
+
 *TODO*: move this *TODO*s into GitHub Issues.
 
 *TODO*: detect file change (use sbt's approach of scanning folder every 200ms)
