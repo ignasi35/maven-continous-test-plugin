@@ -1,6 +1,13 @@
 package com.marimon.maven.continous.test.plugin;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel.MapMode;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +28,7 @@ import org.apache.maven.plugin.surefire.SurefireExecutionParameters;
 import org.apache.maven.plugin.surefire.SurefirePlugin;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.util.Base64;
 
 /**
  * Maven plugin to continously run tests. Developed following the guide at:
@@ -33,7 +41,11 @@ import org.apache.maven.toolchain.ToolchainManager;
 public class ContinousTestPlugin extends AbstractMojo implements
         SurefireExecutionParameters {
 
+    public static final long DELAY = 200;
+
     private final SurefirePlugin surefirePlugin;
+
+    private String _previousHash = "";
 
     public ContinousTestPlugin() {
         this(new SurefirePlugin());
@@ -53,17 +65,87 @@ public class ContinousTestPlugin extends AbstractMojo implements
         while (runs < 10) {
             getLog().info("Checking files...");
 
-            @SuppressWarnings("rawtypes")
-            ConcurrentHashMap ctx = new ConcurrentHashMap();
-            ctx.putAll(getPluginContext());
-            surefirePlugin.setPluginContext(ctx);
+            while (!detectedChange()) {
+                try {
+                    Thread.sleep(DELAY);
+                } catch (InterruptedException e) {
+                }
+            }
+            launch();
 
-            surefirePlugin.execute();
-            // updateTarget();
             getLog().info("Files checked. " + runs);
             runs++;
         }
         getLog().info("Continous Test Plugin completed.");
+    }
+
+    private boolean detectedChange() {
+        String currentHash =
+            new String(Base64.encodeBase64(getCurrentHash()));
+        boolean equals = _previousHash.equals(currentHash);
+        if (!equals) {
+            _previousHash = currentHash;
+        }
+        return !equals;
+    }
+
+    private byte[] getCurrentHash() {
+        MessageDigest instance;
+        try {
+            instance = MessageDigest.getInstance("MD5");
+            updateHash(getBasedir(), instance);
+            updateHash(getTestSourceDirectory(), instance);
+            return instance.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException();
+        }
+    }
+
+    private void updateHash(final File file, final MessageDigest instance) {
+        if (file != null) {
+            instance.update(file.getName().getBytes());
+            if (file.isDirectory()) {
+                File[] listFiles = file.listFiles();
+                for (File f : listFiles) {
+                    updateHash(f, instance);
+                }
+            } else {
+                updateHashFile(instance, file);
+            }
+        } else {
+            instance.update((byte) System.currentTimeMillis());
+        }
+
+    }
+
+    private void updateHashFile(final MessageDigest instance, final File f) {
+        FileInputStream input = null;
+        ByteBuffer bb;
+        try {
+            input = new FileInputStream(f);
+            try {
+                bb =
+                    input.getChannel().map(MapMode.READ_ONLY, 0,
+                        f.length());
+                instance.update(bb);
+            } finally {
+                if (input != null) {
+                    input.close();
+                }
+            }
+        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+        }
+
+    }
+
+    private void launch()
+            throws MojoExecutionException, MojoFailureException {
+        @SuppressWarnings("rawtypes")
+        ConcurrentHashMap ctx = new ConcurrentHashMap();
+        ctx.putAll(getPluginContext());
+        surefirePlugin.setPluginContext(ctx);
+        surefirePlugin.execute();
     }
 
     @SuppressWarnings("rawtypes")
