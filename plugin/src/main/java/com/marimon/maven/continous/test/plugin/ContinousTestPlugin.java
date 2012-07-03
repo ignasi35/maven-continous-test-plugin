@@ -36,7 +36,11 @@ public class ContinousTestPlugin extends AbstractMojo implements
     private final SurefirePlugin surefirePlugin;
 
     public ContinousTestPlugin() {
-        surefirePlugin = new SurefirePlugin();
+        this(new SurefirePlugin());
+    }
+
+    public ContinousTestPlugin(final SurefirePlugin surefirePlugin) {
+        this.surefirePlugin = surefirePlugin;
     }
 
     public void execute() throws
