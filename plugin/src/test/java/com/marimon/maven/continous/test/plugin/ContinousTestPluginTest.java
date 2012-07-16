@@ -106,11 +106,11 @@ public class ContinousTestPluginTest {
         Thread.sleep(ContinousTestPlugin.DELAY * 2);
         touch(_mojo.getBasedir(), "Some.java");
         Thread.sleep(ContinousTestPlugin.DELAY * 5);
-        Assert
-            .assertEquals(
-                "Continous Test Plugin started...1. Checking files..."
-                    + "Files checked.2. Checking files...Files checked.3. Checking files...",
-                log.getSb().toString());
+        Assert.assertEquals(
+            "Continous Test Plugin started...1. Checking files..."
+                + "Files checked.2. Checking files..."
+                + "Files checked.3. Checking files...", log.getSb()
+                .toString());
         pool.shutdownNow();
     }
 

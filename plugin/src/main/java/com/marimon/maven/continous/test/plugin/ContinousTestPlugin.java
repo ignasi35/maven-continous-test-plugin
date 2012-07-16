@@ -53,7 +53,7 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
             throws MojoExecutionException, MojoFailureException {
         getLog().info("Continous Test Plugin started...");
         int runs = 0;
-        while (runs < 10) {
+        while (!completed(runs)) {
             getPlugin().execute();
             getLog().info((runs + 1) + ". Checking files...");
 
@@ -70,6 +70,10 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
             runs++;
         }
         getLog().info("Continous Test Plugin completed.");
+    }
+
+    private boolean completed(final int runs) {
+        return runs >= 10;
     }
 
     @SuppressWarnings("unchecked")
