@@ -54,7 +54,8 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
         getLog().info("Continous Test Plugin started...");
         int runs = 0;
         while (runs < 10) {
-            getLog().info("Checking files...");
+            getPlugin().execute();
+            getLog().info((runs + 1) + ". Checking files...");
 
             while (!detectedChange()) {
                 try {
@@ -62,16 +63,22 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
                 } catch (InterruptedException e) {
                 }
             }
-            @SuppressWarnings("rawtypes")
-            ConcurrentHashMap ctx = new ConcurrentHashMap();
-            ctx.putAll(getPluginContext());
-            getPlugin().setPluginContext(ctx);
-            getPlugin().execute();
 
-            getLog().info("Files checked. " + runs);
+            rebootInnerInstance();
+
+            getLog().info("Files checked.");
             runs++;
         }
         getLog().info("Continous Test Plugin completed.");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void rebootInnerInstance()
+            throws MojoExecutionException, MojoFailureException {
+        @SuppressWarnings("rawtypes")
+        ConcurrentHashMap ctx = new ConcurrentHashMap();
+        ctx.putAll(getPluginContext());
+        getPlugin().setPluginContext(ctx);
     }
 
     private boolean detectedChange() {

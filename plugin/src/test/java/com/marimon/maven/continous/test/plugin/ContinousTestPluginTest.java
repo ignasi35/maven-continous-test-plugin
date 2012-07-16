@@ -64,19 +64,18 @@ public class ContinousTestPluginTest {
         FakeLog log = new FakeLog();
         _mojo.setLog(log);
         _mojo.execute();
-        Assert.assertEquals(
-            "Continous Test Plugin started...Checking files..."
-                + "Files checked. 0Checking files...Files checked. 1"
-                + "Checking files...Files checked. 2"
-                + "Checking files...Files checked. 3"
-                + "Checking files...Files checked. 4"
-                + "Checking files...Files checked. 5"
-                + "Checking files...Files checked. 6"
-                + "Checking files...Files checked. 7"
-                + "Checking files...Files checked. 8"
-                + "Checking files...Files checked. 9"
-                + "Continous Test Plugin completed.", log.getSb()
-                .toString());
+        Assert.assertEquals("Continous Test Plugin started..."
+            + "1. Checking files...Files checked."
+            + "2. Checking files...Files checked."
+            + "3. Checking files...Files checked."
+            + "4. Checking files...Files checked."
+            + "5. Checking files...Files checked."
+            + "6. Checking files...Files checked."
+            + "7. Checking files...Files checked."
+            + "8. Checking files...Files checked."
+            + "9. Checking files...Files checked."
+            + "10. Checking files...Files checked."
+            + "Continous Test Plugin completed.", log.getSb().toString());
     }
 
     @Test
@@ -109,8 +108,8 @@ public class ContinousTestPluginTest {
         Thread.sleep(ContinousTestPlugin.DELAY * 5);
         Assert
             .assertEquals(
-                "Continous Test Plugin started...Checking files..."
-                    + "Files checked. 0Checking files...Files checked. 1Checking files...",
+                "Continous Test Plugin started...1. Checking files..."
+                    + "Files checked.2. Checking files...Files checked.3. Checking files...",
                 log.getSb().toString());
         pool.shutdownNow();
     }
