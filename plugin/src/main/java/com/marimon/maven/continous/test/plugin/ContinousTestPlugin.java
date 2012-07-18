@@ -54,7 +54,7 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
         getLog().info("Continous Test Plugin started...");
         int runs = 0;
         while (!completed(runs)) {
-            getPlugin().execute();
+            rebootInnerInstance();
             getLog().info((runs + 1) + ". Checking files...");
 
             while (!detectedChange()) {
@@ -63,8 +63,6 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
                 } catch (InterruptedException e) {
                 }
             }
-
-            rebootInnerInstance();
 
             getLog().info("Files checked.");
             runs++;
@@ -83,6 +81,7 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
         ConcurrentHashMap ctx = new ConcurrentHashMap();
         ctx.putAll(getPluginContext());
         getPlugin().setPluginContext(ctx);
+        getPlugin().execute();
     }
 
     private boolean detectedChange() {
