@@ -79,13 +79,23 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
     }
 
     @SuppressWarnings("unchecked")
-    private void rerunInstance()
-            throws MojoExecutionException, MojoFailureException {
+    private void rerunInstance() {
         @SuppressWarnings("rawtypes")
         ConcurrentHashMap ctx = new ConcurrentHashMap();
         ctx.putAll(getPluginContext());
         getPlugin().setPluginContext(ctx);
-        getPlugin().execute();
+
+        try {
+            getPlugin().execute();
+        } catch (MojoExecutionException e) {
+            getLog().info("---------------------------");
+            getLog().info("     TEST ERROR.");
+            getLog().info("---------------------------");
+        } catch (MojoFailureException e) {
+            getLog().info("---------------------------");
+            getLog().info("     TEST FAILURE.");
+            getLog().info("---------------------------");
+        }
     }
 
     private boolean detectedChange(final File sourceDirectory,
