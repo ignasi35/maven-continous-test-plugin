@@ -52,6 +52,24 @@ Usage
 </code></pre>
 
 
+
+Example
+---------
+
+To see the continous test plugin in action, enter the runner/ folder from two different consoles. In the first one, execute:
+
+<pre><code>  cd runner
+  mvn clean install  
+</code></pre>
+
+You'll see that it quickly compiles, runs the tests once and waits while 'Checking files...". Then on the other console, edit the file Sample.java or SampleTest.java
+
+<pre><code>  cd runner/
+  vi src/main/java/com/marimon/maven/dummy/Sample.java
+</code></pre>
+
+Every time you save tests should run. 
+
 Todo list
 ---------
 
@@ -59,16 +77,20 @@ The fllowing is incomplete but is more or less prioritized from higher to lower 
 
 *TODO*: enter an infinite loop until a certain key is pressed.
 
-*TODO*: provide colored feedback so it's easie to see if tests passed or failed.
+*TODO*: provide colored feedback so it's easier to see if tests passed or failed.
 
 *TODO*: move this *TODO*s into GitHub Issues.
 
-*TODO*: detect file change (use sbt's approach of scanning folder every 200ms)
+*TODO*: launch recompilation of the parts that changed. Partially achieved. Since it's the same JVM running the code, several changes can be provisioned on the fly. There's still room for improvement.
 
-*TODO*: launch recompilation of the parts that changed
-
-*TODO*: use Java7 (if available to detect file change)
+*TODO*: use Java7 (if available) to detect file change
 
 *TODO*: make the plugin be declared in a parent pom so it's usable in all modules
 
-*TODO*: detect changes in dependency modules soanged module is recompiled (and current module is relaunched? and both are relaunched? and all dependency chain is relaunched?).
+*TODO*: detect changes in dependency modules so changed module is recompiled (and current module is relaunched? and both are relaunched? and all dependency chain is relaunched?).
+
+
+Completed
+---------
+
+*DONE*: detect file change (use sbt's approach of scanning folder every 200ms)
