@@ -53,18 +53,22 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
             throws MojoExecutionException, MojoFailureException {
         getLog().info("Continous Test Plugin started...");
         int runs = 0;
+
+        File sourceDirectory = new File(getBasedir(), "src/main");
+        File testSourceDirectory = new File(getBasedir(), "src/test");
+
         while (!completed(runs)) {
-            rebootInnerInstance();
             getLog().info((runs + 1) + ". Checking files...");
 
-            while (!detectedChange()) {
+            while (!detectedChange(sourceDirectory, testSourceDirectory)) {
                 try {
                     Thread.sleep(DELAY);
                 } catch (InterruptedException e) {
                 }
             }
-
-            getLog().info("Files checked.");
+            getLog().info("Starting tests...");
+            rerunInstance();
+            getLog().info("Tests completed.");
             runs++;
         }
         getLog().info("Continous Test Plugin completed.");
@@ -75,7 +79,7 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
     }
 
     @SuppressWarnings("unchecked")
-    private void rebootInnerInstance()
+    private void rerunInstance()
             throws MojoExecutionException, MojoFailureException {
         @SuppressWarnings("rawtypes")
         ConcurrentHashMap ctx = new ConcurrentHashMap();
@@ -84,9 +88,11 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
         getPlugin().execute();
     }
 
-    private boolean detectedChange() {
+    private boolean detectedChange(final File sourceDirectory,
+            final File testSourceDirectory) {
         String currentHash =
-            new String(Base64.encodeBase64(getCurrentHash()));
+            new String(Base64.encodeBase64(getCurrentHash(sourceDirectory,
+                testSourceDirectory)));
         boolean equals = _previousHash.equals(currentHash);
         if (!equals) {
             _previousHash = currentHash;
@@ -94,12 +100,13 @@ public class ContinousTestPlugin extends DecoratorTestPlugin {
         return !equals;
     }
 
-    private byte[] getCurrentHash() {
+    private byte[] getCurrentHash(final File sourceDirectory,
+            final File testSourceDirectory) {
         MessageDigest instance;
         try {
             instance = MessageDigest.getInstance("MD5");
-            updateHash(getBasedir(), instance);
-            updateHash(getTestSourceDirectory(), instance);
+            updateHash(sourceDirectory, instance);
+            updateHash(testSourceDirectory, instance);
             return instance.digest();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException();

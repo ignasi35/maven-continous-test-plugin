@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
@@ -61,21 +62,28 @@ public class ContinousTestPluginTest {
     @Test
     public void testLoggerOutputsDataRegardingThePluginWhenExecuted()
             throws Exception {
+
         FakeLog log = new FakeLog();
         _mojo.setLog(log);
-        _mojo.execute();
+
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        pool.submit(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    _mojo.execute();
+                } catch (Exception e) {
+                }
+            }
+        });
+
+        pool.awaitTermination(ContinousTestPlugin.DELAY * 12,
+            TimeUnit.MILLISECONDS);
+
         Assert.assertEquals("Continous Test Plugin started..."
-            + "1. Checking files...Files checked."
-            + "2. Checking files...Files checked."
-            + "3. Checking files...Files checked."
-            + "4. Checking files...Files checked."
-            + "5. Checking files...Files checked."
-            + "6. Checking files...Files checked."
-            + "7. Checking files...Files checked."
-            + "8. Checking files...Files checked."
-            + "9. Checking files...Files checked."
-            + "10. Checking files...Files checked."
-            + "Continous Test Plugin completed.", log.getSb().toString());
+            + "1. Checking files...Starting tests...Tests completed."
+            + "2. Checking files...", log.getSb().toString());
     }
 
     @Test
@@ -106,17 +114,18 @@ public class ContinousTestPluginTest {
         Thread.sleep(ContinousTestPlugin.DELAY * 2);
         touch(_mojo.getBasedir(), "Some.java");
         Thread.sleep(ContinousTestPlugin.DELAY * 5);
-        Assert.assertEquals(
-            "Continous Test Plugin started...1. Checking files..."
-                + "Files checked.2. Checking files..."
-                + "Files checked.3. Checking files...", log.getSb()
-                .toString());
+        Assert.assertEquals("Continous Test Plugin started..."
+            + "1. Checking files...Starting tests...Tests completed."
+            + "2. Checking files...Starting tests...Tests completed."
+            + "3. Checking files...", log.getSb().toString());
         pool.shutdownNow();
     }
 
     private void touch(final File basedir, final String name)
             throws IOException {
-        File file = new File(basedir, name);
+        File parent = new File(basedir, "src/main/java/");
+        parent.mkdirs();
+        File file = new File(parent, name);
         FileOutputStream out = new FileOutputStream(file);
         out.write(Long.toString(System.currentTimeMillis()).getBytes());
         out.close();
